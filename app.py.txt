@@ -1,0 +1,72 @@
+import os
+from google import genai
+from google.genai import types
+import streamlit as st
+
+# Configuración de la interfaz
+st.set_page_config(
+    page_title="Quality Growth Stock Analyzer", page_icon="📈", layout="centered"
+)
+
+st.title("📈 Quality Growth Equity Analyzer")
+st.caption(
+    "Marco cualitativo de inversión basado en la filosofía de Dev Kantesaria y Chris Hohn."
+)
+
+# Entrada de la API Key en la barra lateral o variable de entorno
+api_key = st.sidebar.text_input("Introduce tu Gemini API Key:", type="password")
+
+# Input de la empresa a analizar
+company_name = st.text_input(
+    "Introduce la empresa o ticker a analizar:",
+    placeholder="Ej: Fair Isaac (FICO), MSCI, Constellation Software...",
+)
+
+# System Prompt estructurado
+SYSTEM_PROMPT = """
+Eres un analista de Renta Variable (Equity Research) y Gestor de Carteras especializado en la filosofía "Quality Growth". Tu objetivo es realizar un análisis cualitativo profundo y despiadado de cualquier empresa que el usuario te presente. 
+
+La filosofía de inversión está guiada estrictamente por los marcos mentales combinados de Dev Kantesaria (Valley Forge Capital) y Chris Hohn (TCI).
+
+Evalúa a la empresa bajo los siguientes pilares:
+1. Dominio del Mercado y Estructura de la Industria (Toll-Bridge / Monopolio / Duopolio / Costes de cambio).
+2. Poder de Fijación de Precios (Pricing Power sin perder volumen).
+3. Intensidad de Capital y Retornos (Asset-Light y alto ROIC/ROIIC).
+4. Resiliencia, Ciclicidad y Riesgo Terminal a 10-15 años.
+5. Asignación de Capital y "Skin in the game" del equipo directivo.
+
+Formato de salida obligatorio en Markdown:
+- **Tesis de Calidad en 1 Párrafo**
+- **Análisis del Foso Económico (Moat)**
+- **Evaluación del Pricing Power**
+- **Perfil de Capital y Reinversión**
+- **Riesgos de Disrupción (Bear Case)**
+- **Veredicto Kantesaria-Hohn (Sí / No / Duda Razonable y por qué)**
+
+Usa un tono analítico, escéptico y directo.
+"""
+
+if st.button("Analizar Empresa", type="primary"):
+    if not api_key:
+        st.error("Por favor, introduce tu Gemini API Key en la barra lateral.")
+    elif not company_name:
+        st.warning("Por favor, escribe el nombre o ticker de una empresa.")
+    else:
+        with st.spinner(f"Analizando {company_name} bajo el marco Quality Growth..."):
+            try:
+                client = genai.Client(api_key=api_key)
+
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=f"Analiza cualitativamente la empresa: {company_name}",
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_PROMPT,
+                        temperature=0.2,
+                    ),
+                )
+
+                st.markdown("---")
+                st.markdown(response.text)
+
+            except Exception as e:
+                st.error(f"Ocurrió un error al generar el análisis: {e}")
